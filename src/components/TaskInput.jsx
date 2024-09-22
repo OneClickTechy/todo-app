@@ -10,14 +10,16 @@ const TaskInput = ({
   handleDateInput,
   priorityValue,
   handlePriorityInput,
+  statusValue,
+  handleStatusInput,
+  handleSubmit,
 }) => {
   return (
-    <form className="flex flex-col justify-center items-center gap-4 border-2 border-black rounded-3xl p-4">
-      <label
-        htmlFor="task"
-        className="absolute left-[-99999px]"
-        onSubmit={(e) => e.preventDefault()}
-      >
+    <form
+      className="flex flex-col justify-center items-center gap-4 border-2 border-black rounded-3xl p-4"
+      onSubmit={(e) => e.preventDefault()}
+    >
+      <label htmlFor="task" className="absolute left-[-99999px]">
         task name
       </label>
       <input
@@ -65,6 +67,8 @@ const TaskInput = ({
         name="status"
         id="status"
         className="border-2 border-black rounded-3xl h-10 px-2 focus:outline-none focus:ring focus:ring-green-400"
+        value={statusValue}
+        onChange={handleStatusInput}
       >
         {Object.entries(taskStatus).map(([key, value]) => (
           <option key={key} value={value}>
@@ -78,6 +82,7 @@ const TaskInput = ({
         tabIndex="0"
         aria-label="Add task"
         className="text-2xl hover:text-green-400 active:text-green-600 focus:text-green-600"
+        onClick={handleSubmit}
       />
     </form>
   );
