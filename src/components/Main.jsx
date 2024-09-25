@@ -2,11 +2,21 @@ import React, { useState, useEffect } from "react";
 import TaskInput from "./TaskInput";
 import TaskSearch from "./TaskSearch";
 import TasksContainer from "./TasksContainer";
+import fetchData from "./fetchData";
 
 const Main = () => {
-  const [tasks, setTasks] = useState(
-    JSON.parse(localStorage.getItem("tasks")) || []
+  const [tasks, setTasks] = useState([]);
+  const [taskValue, setTaskValue] = useState("");
+  const [dateValue, setDateValue] = useState(
+    new Date().toISOString().split("T")[0]
   );
+  const [priorityValue, setPriorityValue] = useState("");
+  const [statusValue, setStatusValue] = useState("");
+  const [error, setError] = useState(null);
+  const [editMode, setEditMode] = useState(false);
+  const [editTaskId, setEditTaskId] = useState(undefined);
+
+  const API_URL = "http://localhost:3500/tasks";
 
   const taskPriority = {
     low: "🟢 Low", // Green circle for low priority
@@ -22,20 +32,20 @@ const Main = () => {
     cancelled: "❌ Cancelled", // Cross mark for cancelled
   };
 
-  const [taskValue, setTaskValue] = useState("");
-  const [dateValue, setDateValue] = useState(
-    new Date().toISOString().split("T")[0]
-  );
-  const [priorityValue, setPriorityValue] = useState("");
-  const [statusValue, setStatusValue] = useState("");
-
-  // Log tasks whenever they change
   useEffect(() => {
-    console.log(tasks);
-  }, [tasks]);
-
-  const [editMode, setEditMode] = useState(false);
-  const [editTaskId, setEditTaskId] = useState(undefined);
+    const fetchData = async () => {
+      try {
+        const response = await fetch(API_URL);
+        if (!response.ok)
+          throw new Error("⚠️ Unable to fetch data, Try to reload the page");
+        const data = response.ok && (await response.json());
+        setTasks(data);
+      } catch (err) {
+        setError(err);
+      }
+    };
+    (async () => await fetchData())();
+  }, []);
 
   const handleCancel = () => {
     // Reset form
@@ -78,7 +88,7 @@ const Main = () => {
           console.log("submit new task");
           const id = new Date().getTime();
           const newTask = {
-            id,
+            id: `${id}`,
             taskValue,
             dateValue,
             priorityValue,
@@ -87,7 +97,16 @@ const Main = () => {
 
           setTasks([...tasks, newTask]);
 
-          localStorage.setItem("tasks", JSON.stringify([...tasks, newTask]));
+          const optionsObj = {
+            method: "POST",
+            headers: {
+              "Content-type": "application/json",
+            },
+            body: JSON.stringify(newTask),
+          };
+          (async () => {
+            await fetchData(API_URL, optionsObj);
+          })();
 
           setTaskValue("");
           setDateValue(new Date().toISOString().split("T")[0]);
@@ -97,7 +116,7 @@ const Main = () => {
         }}
         editMode={editMode}
         editTaskId={editTaskId}
-        handleTaskEdit={() => {
+        handleTaskEdit={async () => {
           console.log("save edited task");
           if (!taskValue || !statusValue || !priorityValue) {
             alert("enter task in taskfield");
@@ -109,7 +128,30 @@ const Main = () => {
               : task
           );
           setTasks(updatedTasks);
-          localStorage.setItem("tasks", JSON.stringify(updatedTasks));
+          const editedTask = {
+            id: editTaskId,
+            taskValue,
+            dateValue,
+            priorityValue,
+            statusValue,
+          };
+          console.log(editedTask);
+          const editTaskURL = `${API_URL}/${editTaskId}`;
+          console.log(editTaskURL);
+          const optionsObj = {
+            method: "PATCH",
+            headers: {
+              "Content-type": "application/json",
+            },
+            body: JSON.stringify(editedTask),
+          };
+
+          try {
+            // Call fetchData with the URL and options object
+            await fetchData(editTaskURL, optionsObj);
+          } catch (error) {
+            console.error("Error updating task:", error.message);
+          }
 
           // Reset form
           setTaskValue("");
