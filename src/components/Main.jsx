@@ -173,10 +173,21 @@ const Main = () => {
         )}
         taskPriority={taskPriority}
         taskStatus={taskStatus}
-        handleDeleteTask={(id) => {
+        handleDeleteTask={async (id) => {
           const newTasks = tasks.filter((task) => task.id !== id);
           setTasks(newTasks);
-          localStorage.setItem("tasks", JSON.stringify(newTasks));
+
+          const deleteTaskURL = `${API_URL}/${id}`;
+
+          const optionsObj = {
+            method: "DELETE",
+          };
+
+          try {
+            await fetchData(deleteTaskURL, optionsObj);
+          } catch (error) {
+            setError(error.message);
+          }
         }}
         handleEditTask={(id) => {
           setEditMode(true);
